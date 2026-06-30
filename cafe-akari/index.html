@@ -298,6 +298,33 @@
   /* focus visibility */
   a:focus-visible,.btn:focus-visible,button:focus-visible{outline:2px solid var(--brass-soft);outline-offset:3px}
 
+  /* ---------- JS scroll / entrance animations (progressive enhancement) ----------
+     初期の非表示状態は body.anim-on が付いたときだけ適用。
+     JSが無効、または「動きを減らす」設定の人には付与されず、内容は常に表示されます。 */
+  body.anim-on .reveal{
+    opacity:0;
+    transform:translateY(28px);
+    transition:opacity 1s var(--ease), transform 1s var(--ease);
+    will-change:opacity, transform;
+  }
+  body.anim-on .reveal.in{opacity:1;transform:none}
+
+  /* メニュー項目のホバー演出（左に真鍮のラインがすっと伸びる） */
+  .item{position:relative}
+  .item::before{
+    content:"";position:absolute;left:-16px;top:50%;
+    transform:translateY(-50%) scaleY(0);transform-origin:center;
+    width:2px;height:62%;background:var(--brass);
+    transition:transform .4s var(--ease);
+  }
+  .item:hover::before{transform:translateY(-50%) scaleY(1)}
+  .item{transition:padding-left .4s var(--ease)}
+  .item:hover{padding-left:8px}
+
+  /* ギャラリー写真のホバー（わずかにズーム＆持ち上がる） */
+  .photo{transition:transform .5s var(--ease), box-shadow .5s var(--ease)}
+  .photo:hover{transform:translateY(-4px) scale(1.012);box-shadow:0 18px 40px rgba(23,42,34,.22)}
+
   /* ---------- Responsive ---------- */
   @media (max-width:900px){
     .hero-grid{grid-template-columns:1fr}
@@ -595,6 +622,42 @@
       burger.setAttribute('aria-expanded', false);
     })
   );
+
+  // ---- Scroll reveal + hero entrance (respects reduced-motion) ----
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!reduceMotion && 'IntersectionObserver' in window) {
+    document.body.classList.add('anim-on');
+
+    // [selector, stagger(ms)] — グループごとに少しずつ遅らせて表示
+    const groups = [
+      ['.hero-copy .eyebrow, .hero h1, .hero p.lead, .hero-actions', 110],
+      ['.about-photo, .about-text', 140],
+      ['#menu .section-head', 0],
+      ['#menu .item', 75],
+      ['#gallery .section-head', 0],
+      ['#gallery .photo', 90],
+      ['#access .section-head', 0],
+      ['#access .hours-table, #access .info-row, #access .map-ph', 90],
+      ['.cta h2, .cta p, .cta .btn', 100],
+    ];
+
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15, rootMargin: '0px 0px -8% 0px' });
+
+    groups.forEach(([selector, stagger]) => {
+      document.querySelectorAll(selector).forEach((el, i) => {
+        el.classList.add('reveal');
+        if (stagger) el.style.transitionDelay = (i * stagger) + 'ms';
+        io.observe(el);
+      });
+    });
+  }
 </script>
 </body>
 </html>
