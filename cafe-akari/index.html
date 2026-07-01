@@ -624,8 +624,10 @@
   );
 
   // ---- Scroll reveal + hero entrance (respects reduced-motion) ----
+  // プレビュー埋め込み時（?preview=1）は演出をスキップし、最初から全要素を表示する
+  const isPreview = new URLSearchParams(location.search).has('preview');
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (!reduceMotion && 'IntersectionObserver' in window) {
+  if (!reduceMotion && !isPreview && 'IntersectionObserver' in window) {
     document.body.classList.add('anim-on');
 
     // [selector, stagger(ms)] — グループごとに少しずつ遅らせて表示
